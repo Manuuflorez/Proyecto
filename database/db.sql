@@ -70,6 +70,53 @@ USE proyecto;
     FROM orders o
     INNER JOIN products p ON o.product_id = p.product_id;
 
+-- Join 1: Combina datos de pedidos con clientes y productos.
+-- Obtiene información detallada de pedidos, incluyendo el ID del pedido, nombre del cliente, fecha del pedido,
+-- nombre del producto, precio unitario y total.
+    SELECT 
+        o.order_id AS ID_Pedido, 
+        c.name AS Nombre_Cliente, 
+        o.order_date AS Fecha_Pedido, 
+        p.product_name AS Producto, 
+        p.unit_price AS Precio_Unitario, 
+        o.total_amount AS Total 
+    FROM orders o 
+    INNER JOIN customer c ON o.customer_id = c.id 
+    INNER JOIN products p ON o.product_id = p.product_id
+
+    UNION
+
+-- Join 2: Resumen de datos de clientes.
+-- Obtiene un resumen de los clientes, incluyendo el nombre del cliente, sin detalles de pedidos,
+-- pero con el cálculo de la suma total de los montos de sus pedidos como Precio_Unitario y Total.
+SELECT 
+    SELECT 
+        NULL AS ID_Pedido, 
+        c.name AS Nombre_Cliente, 
+        NULL AS Fecha_Pedido, 
+        NULL AS Producto, 
+        SUM(o.total_amount) AS Precio_Unitario, 
+        SUM(o.total_amount) AS Total 
+    FROM customer c 
+    LEFT JOIN orders o ON c.id = o.customer_id 
+    GROUP BY c.name
+
+    UNION
+
+-- Join 3: Resumen de datos de productos.
+-- Obtiene un resumen de los productos, incluyendo el nombre del producto, sin detalles de pedidos,
+-- pero con el recuento total de los pedidos en los que se ha comprado como Total.
+    SELECT 
+        NULL AS ID_Pedido, 
+        NULL AS Nombre_Cliente, 
+        NULL AS Fecha_Pedido, 
+        p.product_name AS Producto, 
+        NULL AS Precio_Unitario, 
+        COUNT(o.order_id) AS Total 
+    FROM products p 
+    LEFT JOIN orders o ON p.product_id = o.product_id
+    GROUP BY p.product_name;
+
 
 --Procedimiento Almacenado 1: Obtener los Detalles de un Pedido
     CREATE PROCEDURE DetallesPedido(
@@ -142,7 +189,7 @@ USE proyecto;
         RETURN total;
     END;
 
---Fncion avanzada 2: Calcular cuál es el producto que más compran los clientes
+--Funcion avanzada 2: Calcular cuál es el producto que más compran los clientes
     CREATE FUNCTION ProductoMasComprado() RETURNS VARCHAR(50)
     BEGIN
         DECLARE productoMasComprado VARCHAR(50);
